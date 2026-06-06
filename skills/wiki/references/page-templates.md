@@ -38,15 +38,16 @@ _Updated YYYY-MM-DD. <N> pages total._
 
 ## `log.md`
 
-Append-only. Each entry starts with `## [YYYY-MM-DD] <op> | <title>` so
-`grep "^## \[" wiki/log.md | tail -N` parses cleanly. Operations: `ingest`, `init`, `lint`, `query`.
+Newest-first: prepend each new entry. Each entry starts with `## [YYYY-MM-DD] <op> | <title>` so
+`grep "^## \[" wiki/log.md | head -N` returns the N most recent. Operations: `ingest`, `init`, `lint`, `query`.
 
 ```markdown
 # Log
 
-## [2026-05-25] init | wiki scaffolded
+## [2026-05-27] query | how does Acme remit vs EF?
 
-- Created `wiki/`, `wiki/index.md`, `wiki/log.md`.
+- Pages read: [[Acme Corp]], [[EF]], [[Remittance Cycle]]
+- Filed answer at: [[Vendor Comparison]]
 
 ## [2026-05-26] ingest | Acme Q1 Statement
 
@@ -55,10 +56,9 @@ Append-only. Each entry starts with `## [YYYY-MM-DD] <op> | <title>` so
 - Updated: [[Remittance Cycle]], [[index]]
 - Notes: First vendor on the wiki. Established the `Entities/Vendors` section.
 
-## [2026-05-27] query | how does Acme remit vs EF?
+## [2026-05-25] init | wiki scaffolded
 
-- Pages read: [[Acme Corp]], [[EF]], [[Remittance Cycle]]
-- Filed answer at: [[Vendor Comparison]]
+- Created `wiki/`, `wiki/index.md`, `wiki/log.md`.
 ```
 
 ---
