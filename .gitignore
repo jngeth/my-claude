@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Status line runtime state — local only, not useful to others
+statusline/sessions/
+statusline/monthly.cache
+statusline/monthly.cache.lock
+statusline/ratelimits.cache
