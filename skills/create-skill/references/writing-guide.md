@@ -116,6 +116,18 @@ Load it when drafting or editing any SKILL.md content.
 
 ---
 
+## Naming the skill
+
+`name` is kebab-case, ≤64 chars, matching the directory. Beyond the mechanics, name it for what it _does_:
+
+- **Verb-first or gerund:** `analyze-logs` , `create-invoices`, `rotate-pdf` beat noun blobs like `invoice-tool`.
+- **Name the action or core insight, not the implementation:** `condition-based-waiting` over `async-helpers`.
+- **Avoid vague catch-alls:** `docs`, `helper`, `tools` `utils` say nothing about when to reach for the skill.
+
+The name is a second triggering signal after description: it shows in the skills list and shapes the relevance guess.
+
+---
+
 ## Description: the triggering mechanism
 
 The `description` field is the **only** signal Claude uses to decide whether to invoke a skill. Write it to cover both:
@@ -130,6 +142,24 @@ Claude tends to **under-trigger** skills. Be a little pushy. Compare:
 
 Don't make it so pushy it triggers on adjacent-but-different tasks.
 The optimization loop in `description-tuning.md` measures this directly.
+
+**Use words Claude would search for.** Beyond the description, seed the body with literal error strings, symptoms
+(`flaky`, `hanging`, `timeout`), file types and synonyms. `description-tuning.md` covers description keyword workflows.
+
+---
+
+## Degrees of freedom
+
+Match how prescriptive the instructions are to how fragile the task is.
+
+- **High (prose guidance):** many valid approaches, context decides. Give direction and trust Claude to route.
+  Example: "Review the code for bugs, readability, and convention violations."
+- **Medium (template or parameterized script):** a preferred pattern exists, some variation is fine.
+  Example: a report skeleton Claude fills in, or `generate_report(data, format="md")`.
+- **Low (exact command, no improvisation):** the task is fragile or order-dependent. Pin it:
+  "Run exactly `python scripts/migrate.py --verify --backup`. Don't add flags."
+
+Over-specifying an open task wastes context and boxes Claude in; under-specifying a fragile one invites the error.
 
 ---
 
