@@ -34,6 +34,17 @@ Four additional principles apply when the content is a SKILL.md or skill referen
 Load `subskills/markdown.md` whenever drafting or editing markdown: SKILL.md, README, documentation, technical
 writing, PR descriptions formatted in markdown. It has the full principle list with worked examples.
 
+## Markdown tables
+
+Whenever you create or edit a markdown table, run `scripts/align_tables.py` on the file so the columns line up.
+It measures display width, so emoji, CJK text, and combining marks stay aligned where a `len()`-based pass drifts.
+It rewrites only table blocks and leaves the rest of the file untouched.
+
+- Print the aligned result: `python3 scripts/align_tables.py <file>`
+- Rewrite in place: `python3 scripts/align_tables.py -w <file>`
+
+It preserves each column's alignment: plain `| --- |` stays plain, and `:--`, `:-:`, `--:` keep their colons.
+
 ## Out of scope
 
 - Code comments. System rules govern those (default: no comments).
