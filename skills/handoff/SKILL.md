@@ -27,6 +27,15 @@ The next session pays to rediscover anything you skip, so be thorough:
 - Discoveries and gotchas.
 - Open questions and dependencies on other work.
 
+## If a plan is in context
+
+When the session has been executing a plan already in context at the start (`plan_*.md` opened from the temp dir),
+reference that plan instead of restating it. The plan is source of truth for task breakdown, file map, and architecture.
+Copying it into the handoff duplicates content that drifts as the work moves and bloats the doc.
+
+Record progress against the plan, not a copy of it: which tasks are done, which is in flight, where the work diverged
+from the plan and why. Point "Where We're Going" and "Quick Start" at the plan's path for the remaining steps.
+
 ## Structure
 
 Use these section headings so the next session knows where to look. Omit a section only when it has no content.
