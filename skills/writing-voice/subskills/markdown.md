@@ -47,9 +47,9 @@ Once names are established, refer to them collectively.
 - Before: "example `scripts/`, `references/`, `assets/` files"
 - After: "example subdirectory files"
 
-### 6. Alphabetize structured lists
+### 6. Alphabetize lists
 
-When the order of items doesn't matter to the instruction, alphabetize. Predictable ordering scans faster.
+Alphabetize every list. Predictable ordering scans faster. The only exception is lists whose order is itself meaningful.
 
 - Before: scripts, references, assets
 - After: assets, references, scripts
@@ -121,7 +121,7 @@ Before shipping any markdown, read it once with these questions:
 3. Could any example be half as long?
 4. Could any bullet be removed?
 5. Are names repeated where "them" or "they" would do?
-6. Are any structured lists out of alphabetical order without reason?
+6. Is any list out of alphabetical order? Alphabetize unless the order is meaningful.
 7. Could any short consecutive lines pack into one near 120 chars?
 8. Any orphan one-or-two-word continuation lines that could be absorbed upstream?
 
