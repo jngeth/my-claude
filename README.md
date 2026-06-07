@@ -32,14 +32,24 @@ Then register in `~/.claude/settings.json`:
 
 ---
 
+## Agents
+
+Specialized subagents Claude delegates to. Each is a single `agents/<name>.md` file (YAML frontmatter plus a body that
+becomes the agent's system prompt), symlinked to `~/.claude/agents`. Build and validate with the `create-agents` skill.
+
+| Agent             | What it does                                                        |
+| ----------------- | ------------------------------------------------------------------- |
+| `python-engineer` | Implements, refactors, or fixes Python features end-to-end with TDD |
+| `python-reviewer` | Reviews Python code or diffs against project conventions, read-only |
+
 ## Skills
 
-Skills are prompt modules that Claude Code loads on demand. Each lives in `skills/<name>/` with a file. Skills
-directories have optional `agents/`, `references/`, and `scripts/` subdirectories. `SKILL.md` files include YAML
-frontmatter and instructions.
+Prompt modules Claude loads on demand. Each lives in `skills/<name>/` with a file. Skills directories have optional
+`agents/`, `references/`, and `scripts/` subdirectories. `SKILL.md` files include YAML frontmatter and instructions.
 
 | Skill           | What it does                                                                                      |
 | --------------- | ------------------------------------------------------------------------------------------------- |
+| `create-agents` | Full workflow for building, testing, and tuning new subagents                                     |
 | `create-skill`  | Full workflow for building, testing, and tuning new skills                                        |
 | `handoff`       | Compact the current conversation into a dated doc a fresh session can pick up                     |
 | `onboard`       | Read the latest handoff doc and a targeted slice of the project wiki at session start             |
