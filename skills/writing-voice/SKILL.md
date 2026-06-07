@@ -10,12 +10,13 @@ files, SKILL.md, doc edits, PR descriptions, summaries, anything the user will r
 
 ## Core principles
 
-Four principles cover most of the editing:
+Five principles cover most of the editing:
 
 1. **Punctuation: colon or period, never em-dash.** Em-dashes hide structure; colons reveal it. Em-dashes are banned.
 2. **Cut flavor, keep instruction.** Anecdotes, jokes, voicy framing, rhetorical flourishes go first. The rule stays.
 3. **Plain over voicy.** Prefer direct assertion to performative phrasing.
-4. **Pack lines toward 120 characters.** Combine short consecutive lines.
+4. **Alphabetize lists.** Sort every list alphabetically. The exception is a list whose order is itself meaningful.
+5. **Pack lines toward 120 characters.** Combine short consecutive lines.
    If a wrap leaves one or two orphan words on the next line, trim the previous line so they fit.
 
 For the full set with concrete before/after examples, load `subskills/markdown.md`.
@@ -57,5 +58,6 @@ It preserves each column's alignment: plain `| --- |` stays plain, and `:--`, `:
 - Could any example be half as long?
 - Any em-dashes? Replace with a colon or period.
 - Could any short consecutive lines pack into one near 120 chars?
+- Is any list out of alphabetical order? Sort it unless the order is meaningful.
 - Any orphan one-or-two-word lines that could be absorbed by trimming the line above?
 - Are any bullets or sentences removable without breaking the surrounding instruction?
