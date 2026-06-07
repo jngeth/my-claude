@@ -28,7 +28,7 @@ Then register in `~/.claude/settings.json`:
 
 ## Required Binaries
 
-`awk`, `bash`, and `jq`. Standard on macOS and most Linux distros.
+`awk`, `bash`, `flock`, and `jq`. Standard on macOS and most Linux distros.
 
 ---
 
