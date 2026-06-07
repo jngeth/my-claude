@@ -1,18 +1,19 @@
 ---
 name: onboard
-description: Orient at session start by reading handoff docs and project wiki. Use when opening or resuming a project.
+description: Orient at session start. Identify handoff and plan docs, read wiki. Use when opening or resuming a project.
 ---
 
 # Onboard
 
 ## Overview
 
-Get up to speed in a project without reading every wiki page. Read the latest handoff doc (if any) and a small,
-targeted slice of the project wiki, then report the current state so work can start.
+Get up to speed in a project without reading everything up front. Identify the handoff and plan docs for this project,
+read a targeted slice of the wiki, then report so work can start. Open a handoff or plan doc only when the user asks.
 
-Pairs with two existing skills:
+Pairs with three existing skills:
 
-- `handoff` writes a session-summary doc to the OS temp dir. `onboard` reads it.
+- `handoff` writes a session-summary doc to the OS temp dir. `onboard` surfaces it, but reads it only on request.
+- `plan` writes an implementation plan to the OS temp dir. `onboard` surfaces it, but reads it only on request.
 - `wiki` owns the project knowledge base at `wiki/`. `onboard` reads only what's needed; it never edits.
 
 ## When to use
@@ -27,37 +28,39 @@ question that doesn't need broad orientation.
 
 ## How to use
 
-### 1. Find the latest handoff doc
+### 1. Find handoff and plan docs
 
-The `handoff` skill writes files named `handoff_<project>_<YYYY-MM-DDTHH:MM>.md` to the OS temp dir. The ISO-8601
-timestamp sorts lexically, so the latest is the last entry after a plain sort.
+The `handoff` and `plan` skills write working docs to the OS temp dir:
 
-Resolve the project name and glob:
+- `handoff_<project>_<YYYY-MM-DDTHH:MM>.md`
+- `plan_<project>_<feature>_<YYYY-MM-DDTHH:MM>.md`
+
+Resolve the project name and list both, newest last (the ISO-8601 timestamp sorts lexically):
 
 ```bash
 project=$(basename "$PWD")
-ls "$TMPDIR"/handoff_"$project"_*.md /tmp/handoff_"$project"_*.md 2>/dev/null | sort | tail -1
+ls "$TMPDIR"/handoff_"$project"_*.md /tmp/handoff_"$project"_*.md 2>/dev/null | sort
+ls "$TMPDIR"/plan_"$project"_*.md /tmp/plan_"$project"_*.md 2>/dev/null | sort
 ```
 
 (`$TMPDIR` is set on macOS; `/tmp` is the Linux default. Including both covers either OS without branching.)
 
-If the glob returns nothing, skip to step 3. If the user wants an older handoff, list all matches and ask.
+If both globs return nothing, skip to step 3.
 
-### 2. Read the latest handoff in full
+### 2. Identify, don't open
 
-Handoff docs are short by design: read the whole thing. Note especially:
+List the docs found by filename: handoff timestamp, and each plan's feature and date. Do not read their contents.
+They can be long, and the user may want a specific one. Treat them as leads, not required reading.
 
-- The "suggested skills" section (these may need to be invoked next)
-- Any referenced file paths or URLs (don't open them yet; they're leads for later)
-- Stated open questions or in-progress work
+Open a doc only when the user names it or asks ("read the latest handoff", "open the auth plan"). Then read it in full.
 
 ### 3. Check for a wiki
 
 Look for `wiki/index.md` in the current working directory. If it's absent:
 
 - Stop here.
-- Tell the user there's no wiki to load and summarize what the handoff said (if anything).
-- If neither handoff nor wiki exist, say so and ask what the user wants to work on.
+- Tell the user there's no wiki, and list the handoff and plan docs you found (unread).
+- If no docs and no wiki exist, say so and ask what the user wants to work on.
 
 ### 4. Read the index and recent log activity
 
@@ -71,9 +74,8 @@ grep "^## \[" wiki/log.md | head -20
 
 ### 5. Pick a small set of pages to read
 
-Cross-reference what the handoff covers with index categories and recent log entries. Read in full **only** pages that:
+Read in full **only** pages that:
 
-- The handoff references directly, OR
 - The log shows as updated in the last few entries, OR
 - Match the topic the user said they want to work on (if they said).
 
@@ -83,15 +85,14 @@ Cap at roughly 5 pages. Skip anything tangential. The point is targeted orientat
 
 One short paragraph covering:
 
-- What the last session was doing
-- What's open or in progress
-- What was recently changed in the wiki
+- The handoff and plan docs available (filename)
+- What the wiki shows as recently changed
 - A one-line suggestion for where to start
 
-End with: **Ready. What do you want to work on?**
+End with: **Ready. Open a handoff or plan doc, or tell me what to work on?**
 
 ## Notes
 
+- **Identify, don't open.** Surface the handoff and plan docs by name, but read one only when the user asks for it.
 - **Read-only.** Do not ingest, lint, or edit the wiki. Mutations go through the `wiki` skill.
-- **Surface conflicts.** If the handoff and wiki disagree, call it out rather than guessing which is current.
 - **No CLAUDE.md duplication.** Don't re-read or re-summarize it, the harness has already loaded it.
