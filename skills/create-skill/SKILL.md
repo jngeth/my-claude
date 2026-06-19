@@ -118,6 +118,13 @@ After testing, the user gives feedback. Generalize from it; don't add fiddly ove
 Keep the skill lean; explain the **why**. If you notice all test runs reinventing the same helper script, bundle it.
 Repeat until the user is satisfied or feedback dries up.
 
+**Diagnose by symptom before editing.** Name what the skill did wrong, then reach for the matching fix:
+
+- **No-op**: an instruction Claude already follows by default. Cut it (the `writing-voice` skill has the test).
+- **Premature completion**: Claude ends a step early. Sharpen that step's done-condition first (cheap, local).
+- **Sediment**: stale lines left from earlier versions. Prune on every pass, not just when adding.
+- **Sprawl**: SKILL.md is too long. Push reference into `references/` behind a one-line "read when" pointer.
+
 For full iteration mechanics (iteration directories, snapshots, before/after comparison), see `references/eval-loop.md`.
 
 ---
@@ -133,6 +140,8 @@ Before declaring a skill done, verify:
 - [ ] No time-sensitive info (model versions, "currently", dated features)
 - [ ] Consistent terminology throughout body and references
 - [ ] Concrete examples present where behavior is non-obvious
+- [ ] Each step (if any) ends on a checkable done-condition (Claude can tell done from not-done)
+- [ ] No no-op lines: nothing tells Claude to do what it already does by default
 - [ ] References are one level deep: `SKILL.md` links to a reference, references don't chain
 - [ ] `python3 ~/.claude/skills/create-skill/scripts/quick_validate.py <skill-dir>` passes
 
