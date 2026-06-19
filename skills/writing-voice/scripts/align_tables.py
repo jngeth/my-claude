@@ -30,6 +30,7 @@ WIDE_EMOJI_END = 0x1FAFF
 
 
 def _is_wide_codepoint(codepoint: int) -> bool:
+    """Return whether a single codepoint renders two terminal cells wide."""
     if WIDE_EMOJI_START <= codepoint <= WIDE_EMOJI_END:
         return True
     return unicodedata.east_asian_width(chr(codepoint)) in ("W", "F")
@@ -43,6 +44,13 @@ def string_width(text: str) -> int:
     promotes the preceding text-presentation symbol from one cell to two. ZWJ
     sequences, skin-tone modifiers, and regional-indicator flag pairs collapse
     into the single glyph they render as.
+
+    Examples
+    --------
+    >>> string_width("abc")
+    3
+    >>> string_width("漢字")
+    4
     """
     total = 0
     last_width = 0
@@ -103,6 +111,13 @@ def string_width(text: str) -> int:
 
 
 def _split_unescaped(text: str, delimiter: str) -> list[str]:
+    r"""Split ``text`` on ``delimiter``, ignoring backslash-escaped delimiters.
+
+    Examples
+    --------
+    >>> _split_unescaped(r"a\|b|c", "|")
+    ['a\\|b', 'c']
+    """
     parts = []
     current = []
     escaped = False
@@ -123,6 +138,13 @@ def _split_unescaped(text: str, delimiter: str) -> list[str]:
 
 
 def split_cells(line: str) -> list[str]:
+    """Split a markdown table row into stripped cell strings.
+
+    Examples
+    --------
+    >>> split_cells("| a | b | c |")
+    ['a', 'b', 'c']
+    """
     content = line.strip()
     if content.startswith("|"):
         content = content[1:]
@@ -132,6 +154,15 @@ def split_cells(line: str) -> list[str]:
 
 
 def is_delimiter_row(line: str) -> bool:
+    """Return whether ``line`` is a table delimiter row (``|---|:--:|``).
+
+    Examples
+    --------
+    >>> is_delimiter_row("|---|:--:|")
+    True
+    >>> is_delimiter_row("| a | b |")
+    False
+    """
     if "-" not in line:
         return False
     cells = split_cells(line)
@@ -139,6 +170,17 @@ def is_delimiter_row(line: str) -> bool:
 
 
 def parse_alignment(cell: str) -> str:
+    """Return the alignment a delimiter cell encodes via leading/trailing colons.
+
+    Examples
+    --------
+    >>> parse_alignment(":--:")
+    'center'
+    >>> parse_alignment("--:")
+    'right'
+    >>> parse_alignment("---")
+    'none'
+    """
     cell = cell.strip()
     left = cell.startswith(":")
     right = cell.endswith(":")
@@ -152,6 +194,7 @@ def parse_alignment(cell: str) -> str:
 
 
 def _pad(cell: str, width: int, alignment: str) -> str:
+    """Pad ``cell`` with spaces to ``width`` display cells per ``alignment``."""
     deficit = width - string_width(cell)
     if deficit <= 0:
         return cell
@@ -164,6 +207,7 @@ def _pad(cell: str, width: int, alignment: str) -> str:
 
 
 def _delimiter_cell(width: int, alignment: str) -> str:
+    """Render a delimiter cell of ``width`` dashes carrying ``alignment`` colons."""
     if alignment == "center":
         return ":" + "-" * (width - 2) + ":"
     if alignment == "right":
@@ -173,7 +217,10 @@ def _delimiter_cell(width: int, alignment: str) -> str:
     return "-" * width
 
 
-def _render_row(cells: list[str], widths: list[int], alignments: list[str], indent: str) -> str:
+def _render_row(
+    cells: list[str], widths: list[int], alignments: list[str], indent: str
+) -> str:
+    """Render one padded table row with ``| ... |`` separators and ``indent``."""
     padded = [
         _pad(cells[col] if col < len(cells) else "", width, alignments[col])
         for col, width in enumerate(widths)
@@ -182,11 +229,19 @@ def _render_row(cells: list[str], widths: list[int], alignments: list[str], inde
 
 
 def _render_delimiter(widths: list[int], alignments: list[str], indent: str) -> str:
-    cells = [_delimiter_cell(width, alignments[col]) for col, width in enumerate(widths)]
+    """Render the delimiter row sized to ``widths`` and carrying ``alignments``."""
+    cells = [
+        _delimiter_cell(width, alignments[col]) for col, width in enumerate(widths)
+    ]
     return indent + "| " + " | ".join(cells) + " |"
 
 
 def _table_end(lines: list[str], start: int) -> int | None:
+    """Return the exclusive end index of the table starting at ``start``, or None.
+
+    A table requires a header row containing ``|`` followed by a delimiter row.
+    Returns ``None`` when no table begins at ``start``.
+    """
     header = lines[start]
     if "|" not in header or is_delimiter_row(header):
         return None
@@ -199,6 +254,7 @@ def _table_end(lines: list[str], start: int) -> int | None:
 
 
 def _align_block(rows: list[str]) -> list[str]:
+    """Align one full table block (header, delimiter, body) to common widths."""
     indent = rows[0][: len(rows[0]) - len(rows[0].lstrip())]
     header = split_cells(rows[0])
     delimiters = split_cells(rows[1])
@@ -228,6 +284,15 @@ def _align_block(rows: list[str]) -> list[str]:
 
 
 def align_tables(text: str) -> str:
+    r"""Re-align every markdown table in ``text``, leaving other lines untouched.
+
+    Examples
+    --------
+    >>> print(align_tables("| a | bb |\n|---|---|\n| ccc | d |"))
+    | a   | bb  |
+    | --- | --- |
+    | ccc | d   |
+    """
     lines = text.split("\n")
     output = []
     index = 0
@@ -243,12 +308,18 @@ def align_tables(text: str) -> str:
 
 
 def main() -> None:
+    """Align tables from stdin or the given files, printing or rewriting in place."""
     parser = argparse.ArgumentParser(
         description="Align markdown table columns, accounting for emoji and wide characters."
     )
-    parser.add_argument("paths", nargs="*", help="Markdown files to align. Reads stdin when omitted.")
     parser.add_argument(
-        "-w", "--write", action="store_true", help="Rewrite files in place instead of printing."
+        "paths", nargs="*", help="Markdown files to align. Reads stdin when omitted."
+    )
+    parser.add_argument(
+        "-w",
+        "--write",
+        action="store_true",
+        help="Rewrite files in place instead of printing.",
     )
     args = parser.parse_args()
 
