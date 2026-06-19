@@ -16,21 +16,40 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import frontmatter_rules  # noqa: E402
 
 
-ALLOWED_PROPERTIES = {"name", "description", "license", "allowed-tools", "metadata", "compatibility"}
+ALLOWED_PROPERTIES = {
+    "name",
+    "description",
+    "license",
+    "allowed-tools",
+    "metadata",
+    "compatibility",
+}
 
 
-def validate_skill(skill_path):
-    skill_path = Path(skill_path).expanduser().resolve()
+def validate_skill(skill_path: str) -> tuple[bool, str]:
+    """Validate a skill directory's SKILL.md frontmatter and naming.
 
-    if not skill_path.is_dir():
-        return False, f"Not a directory: {skill_path}"
+    Parameters
+    ----------
+    skill_path : str
+        Path to the skill directory.
 
-    skill_md = skill_path / "SKILL.md"
+    Returns
+    -------
+    tuple[bool, str]
+        ``(True, message)`` when valid, otherwise ``(False, reason)``.
+    """
+    resolved = Path(skill_path).expanduser().resolve()
+
+    if not resolved.is_dir():
+        return False, f"Not a directory: {resolved}"
+
+    skill_md = resolved / "SKILL.md"
     if not skill_md.exists():
-        return False, f"SKILL.md not found in {skill_path}"
+        return False, f"SKILL.md not found in {resolved}"
 
     frontmatter, error = frontmatter_rules.parse_frontmatter(skill_md.read_text())
-    if error:
+    if frontmatter is None:
         return False, error
 
     unexpected = set(frontmatter.keys()) - ALLOWED_PROPERTIES
@@ -50,24 +69,33 @@ def validate_skill(skill_path):
         return False, name_error
     name = frontmatter["name"].strip()
 
-    if name != skill_path.name:
-        return False, f"Frontmatter name '{name}' must match directory name '{skill_path.name}'"
+    if name != resolved.name:
+        return (
+            False,
+            f"Frontmatter name '{name}' must match directory name '{resolved.name}'",
+        )
 
-    description_error = frontmatter_rules.validate_description(frontmatter["description"])
+    description_error = frontmatter_rules.validate_description(
+        frontmatter["description"]
+    )
     if description_error:
         return False, description_error
 
     compatibility = frontmatter.get("compatibility")
     if compatibility is not None:
         if not isinstance(compatibility, str):
-            return False, f"compatibility must be a string, got {type(compatibility).__name__}"
+            return (
+                False,
+                f"compatibility must be a string, got {type(compatibility).__name__}",
+            )
         if len(compatibility) > 500:
             return False, f"compatibility is {len(compatibility)} chars; max 500"
 
     return True, f"Skill '{name}' is valid"
 
 
-def main():
+def main() -> None:
+    """Validate the skill directory named on the command line."""
     if len(sys.argv) != 2:
         print("Usage: quick_validate.py <skill-directory>")
         sys.exit(1)
