@@ -125,6 +125,7 @@ Load it when drafting or editing any SKILL.md content.
 - **Avoid vague catch-alls:** `docs`, `helper`, `tools` `utils` say nothing about when to reach for the skill.
 
 The name is a second triggering signal after description: it shows in the skills list and shapes the relevance guess.
+Best when it reuses a word you actually type when you reach for the skill: that shared word is a leading word.
 
 ---
 
@@ -160,6 +161,16 @@ Match how prescriptive the instructions are to how fragile the task is.
   "Run exactly `python scripts/migrate.py --verify --backup`. Don't add flags."
 
 Over-specifying an open task wastes context and boxes Claude in; under-specifying a fragile one invites the error.
+
+---
+
+## Completion criteria for steps
+
+When a skill has ordered steps, end each one on a checkable done-condition: a test Claude can apply to tell done
+from not-done. A vague bound ("once you understand the code") lets Claude declare victory and slip to the next step;
+a checkable one ("every changed function has a test") holds it in place. Where it matters, make the bound exhaustive,
+not merely present: "every modified file accounted for" beats "produce a list of changes." A demanding done-condition
+is what drives Claude to do the digging itself instead of handing the gap back to the user.
 
 ---
 
