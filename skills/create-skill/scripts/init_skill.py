@@ -16,8 +16,11 @@ Examples:
 """
 
 import argparse
+import logging
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 SKILL_TEMPLATE = """---
@@ -106,32 +109,79 @@ TODO: Imperative, step-by-step instructions for this specific route. Explain the
 
 
 def title_case(skill_name: str) -> str:
+    """Convert a kebab-case skill name to a Title Case heading.
+
+    Examples
+    --------
+    >>> title_case("pdf-tools")
+    'Pdf Tools'
+    """
     return " ".join(word.capitalize() for word in skill_name.split("-"))
 
 
-def build_skill_md(skill_name, skill_title, created_dirs):
+def build_skill_md(skill_name: str, skill_title: str, created_dirs: set[str]) -> str:
+    """Render the SKILL.md body, including routing and resource sections.
+
+    Parameters
+    ----------
+    skill_name : str
+        Kebab-case skill name for the frontmatter.
+    skill_title : str
+        Title Case heading derived from the name.
+    created_dirs : set[str]
+        Resource subdirectories being created; controls the optional sections.
+
+    Returns
+    -------
+    str
+        The full SKILL.md contents.
+    """
     body = SKILL_TEMPLATE.format(skill_name=skill_name, skill_title=skill_title)
     if "subskills" in created_dirs:
         body += ROUTING_SECTION
     if created_dirs:
-        lines = ["", "## Resources", "", "This skill includes these resource directories:", ""]
+        lines = [
+            "",
+            "## Resources",
+            "",
+            "This skill includes these resource directories:",
+            "",
+        ]
         for name in sorted(created_dirs):
             lines.append(f"- `{name}/` — {RESOURCE_DESCRIPTIONS[name]}")
         body += "\n".join(lines) + "\n"
     return body
 
 
-def init_skill(skill_name, path, dirs):
+def init_skill(skill_name: str, path: str, dirs: set[str]) -> Path | None:
+    """Create a skill directory and its opt-in resource subdirectories.
+
+    Parameters
+    ----------
+    skill_name : str
+        Kebab-case skill name; also the directory name.
+    path : str
+        Parent directory the skill is created inside.
+    dirs : set[str]
+        Resource subdirectories to create (``scripts``, ``references``,
+        ``assets``, ``subskills``).
+
+    Returns
+    -------
+    Path | None
+        The created skill directory, or ``None`` if it already existed or
+        could not be created.
+    """
     skill_dir = Path(path).expanduser().resolve() / skill_name
 
     if skill_dir.exists():
-        print(f"Error: directory already exists: {skill_dir}")
+        logger.error("directory already exists: %s", skill_dir)
         return None
 
     try:
         skill_dir.mkdir(parents=True, exist_ok=False)
-    except Exception as error:
-        print(f"Error creating directory: {error}")
+    except OSError as error:
+        logger.error("creating directory: %s", error)
         return None
     print(f"Created {skill_dir}")
 
@@ -150,7 +200,9 @@ def init_skill(skill_name, path, dirs):
     if "references" in dirs:
         references_dir = skill_dir / "references"
         references_dir.mkdir()
-        (references_dir / "reference.md").write_text(EXAMPLE_REFERENCE.format(skill_title=skill_title))
+        (references_dir / "reference.md").write_text(
+            EXAMPLE_REFERENCE.format(skill_title=skill_title)
+        )
         print("  + references/reference.md")
 
     if "assets" in dirs:
@@ -173,26 +225,51 @@ def init_skill(skill_name, path, dirs):
         listed = ", ".join(f"{name}/" for name in sorted(dirs))
         print(f"  {step}. Customize the example files in {listed}")
         step += 1
-    print(f"  {step}. Validate: python3 ~/.claude/skills/create-skill/scripts/quick_validate.py {skill_dir}")
+    print(
+        f"  {step}. Validate: python3 ~/.claude/skills/create-skill/scripts/quick_validate.py {skill_dir}"
+    )
 
     return skill_dir
 
 
-def main():
+def main() -> None:
+    """Parse arguments and create the skill directory, exiting non-zero on failure."""
     parser = argparse.ArgumentParser(
         description="Create a new skill directory from a template. Subdirectories are opt-in.",
     )
-    parser.add_argument("skill_name", help="Skill name: lowercase, hyphens, <=64 chars (kebab-case)")
-    parser.add_argument("--path", required=True, help="Directory the skill is created inside")
-    parser.add_argument("--scripts", action="store_true", help="Create scripts/ with an example script")
-    parser.add_argument("--references", action="store_true", help="Create references/ with an example doc")
-    parser.add_argument("--assets", action="store_true", help="Create assets/ with an example file")
-    parser.add_argument("--subskills", action="store_true",
-                        help="Create subskills/ + a routing table in SKILL.md (dispatcher pattern)")
+    parser.add_argument(
+        "skill_name", help="Skill name: lowercase, hyphens, <=64 chars (kebab-case)"
+    )
+    parser.add_argument(
+        "--path", required=True, help="Directory the skill is created inside"
+    )
+    parser.add_argument(
+        "--scripts", action="store_true", help="Create scripts/ with an example script"
+    )
+    parser.add_argument(
+        "--references",
+        action="store_true",
+        help="Create references/ with an example doc",
+    )
+    parser.add_argument(
+        "--assets", action="store_true", help="Create assets/ with an example file"
+    )
+    parser.add_argument(
+        "--subskills",
+        action="store_true",
+        help="Create subskills/ + a routing table in SKILL.md (dispatcher pattern)",
+    )
+    parser.add_argument("--verbose", action="store_true", help="Enable debug logging")
     args = parser.parse_args()
 
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(levelname)s: %(message)s",
+    )
+
     dirs = {
-        name for name in ("scripts", "references", "assets", "subskills")
+        name
+        for name in ("scripts", "references", "assets", "subskills")
         if getattr(args, name)
     }
 
