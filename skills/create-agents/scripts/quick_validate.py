@@ -11,11 +11,13 @@ Usage:
     quick_validate.py <agent-file.md>
 """
 
+import importlib.util
 import sys
 from pathlib import Path
+from types import ModuleType
 
 
-def _load_shared_rules():
+def _load_shared_rules() -> ModuleType:
     """Import frontmatter_rules.py, owned by the create-skill skill.
 
     Tries the installed location (~/.claude/skills) first, then a repo-relative path so
@@ -26,11 +28,14 @@ def _load_shared_rules():
         Path(__file__).resolve().parents[2] / "create-skill" / "scripts",
     ]
     for candidate in candidates:
-        if (candidate / "frontmatter_rules.py").exists():
-            sys.path.insert(0, str(candidate))
-            import frontmatter_rules
-
-            return frontmatter_rules
+        module_path = candidate / "frontmatter_rules.py"
+        if module_path.exists():
+            spec = importlib.util.spec_from_file_location("frontmatter_rules", module_path)
+            if spec is None or spec.loader is None:
+                continue
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
     raise SystemExit("Error: could not locate create-skill/scripts/frontmatter_rules.py")
 
 
@@ -64,7 +69,7 @@ VALID_MODEL_ALIASES = {"inherit", "sonnet", "opus", "haiku"}
 MAX_BODY_LINES = 250
 
 
-def default_search_dirs():
+def default_search_dirs() -> list[Path]:
     """Directories scanned for name collisions: user agents, then project agents."""
     return [
         Path("~/.claude/agents").expanduser(),
@@ -72,10 +77,26 @@ def default_search_dirs():
     ]
 
 
-def find_name_collision(name, agent_path, search_dirs):
+def find_name_collision(
+    name: str, agent_path: Path, search_dirs: list[Path]
+) -> Path | None:
     """Return the path of another agent file declaring ``name``, or None.
 
     Files that fail to parse (e.g. harness prompts without frontmatter) are skipped.
+
+    Parameters
+    ----------
+    name : str
+        The agent name to look for.
+    agent_path : Path
+        The agent file being validated; excluded from the search.
+    search_dirs : list[Path]
+        Directories searched recursively for ``*.md`` agent files.
+
+    Returns
+    -------
+    Path | None
+        The conflicting file, or ``None`` when the name is unique.
     """
     agent_path = agent_path.resolve()
     for base in search_dirs:
@@ -94,15 +115,32 @@ def find_name_collision(name, agent_path, search_dirs):
     return None
 
 
-def validate_agent(agent_path, search_dirs=None):
-    agent_path = Path(agent_path).expanduser().resolve()
+def validate_agent(
+    agent_path: str | Path, search_dirs: list[Path] | None = None
+) -> tuple[bool, str]:
+    """Validate a Claude Code agent file's frontmatter, naming, and body size.
+
+    Parameters
+    ----------
+    agent_path : str | Path
+        Path to the agent ``.md`` file.
+    search_dirs : list[Path] | None, optional
+        Directories scanned for name collisions; defaults to
+        :func:`default_search_dirs` when ``None``.
+
+    Returns
+    -------
+    tuple[bool, str]
+        ``(True, message)`` when valid, otherwise ``(False, reason)``.
+    """
+    resolved = Path(agent_path).expanduser().resolve()
     if search_dirs is None:
         search_dirs = default_search_dirs()
 
-    if not agent_path.is_file():
-        return False, f"Not a file: {agent_path}"
+    if not resolved.is_file():
+        return False, f"Not a file: {resolved}"
 
-    content = agent_path.read_text()
+    content = resolved.read_text()
     frontmatter, error = frontmatter_rules.parse_frontmatter(content)
     if error:
         return False, error
@@ -124,7 +162,9 @@ def validate_agent(agent_path, search_dirs=None):
         return False, name_error
     name = frontmatter["name"].strip()
 
-    description_error = frontmatter_rules.validate_description(frontmatter["description"])
+    description_error = frontmatter_rules.validate_description(
+        frontmatter["description"]
+    )
     if description_error:
         return False, description_error
 
@@ -133,15 +173,20 @@ def validate_agent(agent_path, search_dirs=None):
         if not isinstance(model, str):
             return False, f"model must be a string, got {type(model).__name__}"
         if model not in VALID_MODEL_ALIASES and not model.startswith("claude-"):
-            return False, f"model '{model}' must be inherit/sonnet/opus/haiku or a 'claude-...' id"
+            return (
+                False,
+                f"model '{model}' must be inherit/sonnet/opus/haiku or a 'claude-...' id",
+            )
 
     for field in ("tools", "disallowedTools"):
         value = frontmatter.get(field)
         if value is not None and not isinstance(value, (str, list)):
             return False, f"{field} must be a comma-separated string or a list"
 
-    match = frontmatter_rules.FRONTMATTER_RE.match(content)
-    body = content[match.end() :]
+    frontmatter_match = frontmatter_rules.FRONTMATTER_RE.match(content)
+    if frontmatter_match is None:
+        return False, "Invalid frontmatter format (must be --- ... ---)"
+    body = content[frontmatter_match.end() :]
     body_lines = len(body.splitlines())
     if body_lines > MAX_BODY_LINES:
         return False, (
@@ -149,14 +194,15 @@ def validate_agent(agent_path, search_dirs=None):
             f"The body is the system prompt and loads every call; move shared detail into a skill."
         )
 
-    collision = find_name_collision(name, agent_path, search_dirs)
+    collision = find_name_collision(name, resolved, search_dirs)
     if collision:
         return False, f"Name '{name}' is already used by another agent: {collision}"
 
     return True, f"Agent '{name}' is valid"
 
 
-def main():
+def main() -> None:
+    """Validate the agent file named on the command line."""
     if len(sys.argv) != 2:
         print("Usage: quick_validate.py <agent-file.md>")
         sys.exit(1)
