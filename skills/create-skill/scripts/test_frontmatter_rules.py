@@ -1,97 +1,93 @@
-#!/usr/bin/env python3
-"""Tests for frontmatter_rules.py. Run with: python3 -m unittest test_frontmatter_rules"""
+"""Tests for frontmatter_rules.py."""
 
-import doctest
-import importlib.util
-import unittest
-from pathlib import Path
-
-SCRIPT = Path(__file__).resolve().parent / "frontmatter_rules.py"
-
-spec = importlib.util.spec_from_file_location("frontmatter_rules", SCRIPT)
-frontmatter_rules = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(frontmatter_rules)
-
-parse_frontmatter = frontmatter_rules.parse_frontmatter
-validate_name = frontmatter_rules.validate_name
-validate_description = frontmatter_rules.validate_description
+from types import ModuleType
 
 
-def load_tests(loader, tests, ignore):
-    """Run the module's doctests as part of the suite."""
-    tests.addTests(doctest.DocTestSuite(frontmatter_rules))
-    return tests
+def test_parse_valid(frontmatter_rules: ModuleType) -> None:
+    frontmatter, error = frontmatter_rules.parse_frontmatter(
+        "---\nname: x\ndescription: y\n---\nbody"
+    )
+    assert error is None
+    assert frontmatter == {"name": "x", "description": "y"}
 
 
-class ParseFrontmatterTest(unittest.TestCase):
-    def test_valid(self):
-        frontmatter, error = parse_frontmatter("---\nname: x\ndescription: y\n---\nbody")
-        self.assertIsNone(error)
-        self.assertEqual(frontmatter, {"name": "x", "description": "y"})
-
-    def test_no_frontmatter(self):
-        frontmatter, error = parse_frontmatter("# Just a heading\n")
-        self.assertIsNone(frontmatter)
-        self.assertIn("No YAML frontmatter", error)
-
-    def test_unterminated(self):
-        frontmatter, error = parse_frontmatter("---\nname: open\n")
-        self.assertIsNone(frontmatter)
-        self.assertIn("Invalid frontmatter format", error)
-
-    def test_invalid_yaml(self):
-        frontmatter, error = parse_frontmatter('---\nname: "unterminated\n---\n')
-        self.assertIsNone(frontmatter)
-        self.assertIn("Invalid YAML", error)
-
-    def test_not_a_dict(self):
-        frontmatter, error = parse_frontmatter("---\njust a bare string\n---\n")
-        self.assertIsNone(frontmatter)
-        self.assertIn("must be a YAML dictionary", error)
+def test_parse_no_frontmatter(frontmatter_rules: ModuleType) -> None:
+    frontmatter, error = frontmatter_rules.parse_frontmatter("# Just a heading\n")
+    assert frontmatter is None
+    assert "No YAML frontmatter" in error
 
 
-class ValidateNameTest(unittest.TestCase):
-    def test_valid(self):
-        self.assertIsNone(validate_name("code-reviewer"))
-
-    def test_not_a_string(self):
-        self.assertIn("Name must be a string", validate_name(42))
-
-    def test_not_kebab(self):
-        self.assertIn("kebab-case", validate_name("Bad_Name"))
-
-    def test_double_hyphen(self):
-        self.assertIn("cannot start/end with hyphen", validate_name("bad--name"))
-
-    def test_too_long_default(self):
-        self.assertIn("max 64", validate_name("a" * 65))
-
-    def test_custom_max_length(self):
-        self.assertIn("max 10", validate_name("a" * 11, max_length=10))
+def test_parse_unterminated(frontmatter_rules: ModuleType) -> None:
+    frontmatter, error = frontmatter_rules.parse_frontmatter("---\nname: open\n")
+    assert frontmatter is None
+    assert "Invalid frontmatter format" in error
 
 
-class ValidateDescriptionTest(unittest.TestCase):
-    def test_valid(self):
-        self.assertIsNone(validate_description("Does a thing when asked."))
-
-    def test_not_a_string(self):
-        self.assertIn("Description must be a string", validate_description(5))
-
-    def test_empty(self):
-        self.assertIn("Description is empty", validate_description("   "))
-
-    def test_angle_brackets(self):
-        self.assertIn("angle brackets", validate_description("Use <tool> here"))
-
-    def test_too_long_default(self):
-        self.assertIn("max 107", validate_description("x" * 108))
-
-    def test_multiline(self):
-        self.assertIn("single line", validate_description("line one\nline two"))
-
-    def test_custom_max_length(self):
-        self.assertIn("max 50", validate_description("x" * 51, max_length=50))
+def test_parse_invalid_yaml(frontmatter_rules: ModuleType) -> None:
+    frontmatter, error = frontmatter_rules.parse_frontmatter(
+        '---\nname: "unterminated\n---\n'
+    )
+    assert frontmatter is None
+    assert "Invalid YAML" in error
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_parse_not_a_dict(frontmatter_rules: ModuleType) -> None:
+    frontmatter, error = frontmatter_rules.parse_frontmatter(
+        "---\njust a bare string\n---\n"
+    )
+    assert frontmatter is None
+    assert "must be a YAML dictionary" in error
+
+
+def test_name_valid(frontmatter_rules: ModuleType) -> None:
+    assert frontmatter_rules.validate_name("code-reviewer") is None
+
+
+def test_name_not_a_string(frontmatter_rules: ModuleType) -> None:
+    assert "Name must be a string" in frontmatter_rules.validate_name(42)
+
+
+def test_name_not_kebab(frontmatter_rules: ModuleType) -> None:
+    assert "kebab-case" in frontmatter_rules.validate_name("Bad_Name")
+
+
+def test_name_double_hyphen(frontmatter_rules: ModuleType) -> None:
+    assert "cannot start/end with hyphen" in frontmatter_rules.validate_name(
+        "bad--name"
+    )
+
+
+def test_name_too_long_default(frontmatter_rules: ModuleType) -> None:
+    assert "max 64" in frontmatter_rules.validate_name("a" * 65)
+
+
+def test_name_custom_max_length(frontmatter_rules: ModuleType) -> None:
+    assert "max 10" in frontmatter_rules.validate_name("a" * 11, max_length=10)
+
+
+def test_description_valid(frontmatter_rules: ModuleType) -> None:
+    assert frontmatter_rules.validate_description("Does a thing when asked.") is None
+
+
+def test_description_not_a_string(frontmatter_rules: ModuleType) -> None:
+    assert "Description must be a string" in frontmatter_rules.validate_description(5)
+
+
+def test_description_empty(frontmatter_rules: ModuleType) -> None:
+    assert "Description is empty" in frontmatter_rules.validate_description("   ")
+
+
+def test_description_angle_brackets(frontmatter_rules: ModuleType) -> None:
+    assert "angle brackets" in frontmatter_rules.validate_description("Use <tool> here")
+
+
+def test_description_too_long_default(frontmatter_rules: ModuleType) -> None:
+    assert "max 107" in frontmatter_rules.validate_description("x" * 108)
+
+
+def test_description_multiline(frontmatter_rules: ModuleType) -> None:
+    assert "single line" in frontmatter_rules.validate_description("line one\nline two")
+
+
+def test_description_custom_max_length(frontmatter_rules: ModuleType) -> None:
+    assert "max 50" in frontmatter_rules.validate_description("x" * 51, max_length=50)

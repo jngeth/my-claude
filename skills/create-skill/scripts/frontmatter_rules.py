@@ -17,7 +17,7 @@ except ImportError:  # pragma: no cover - environment guard
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---", re.DOTALL)
 
 
-def parse_frontmatter(content):
+def parse_frontmatter(content: str) -> tuple[dict, None] | tuple[None, str]:
     """Parse the leading YAML frontmatter block from markdown content.
 
     Parameters
@@ -58,7 +58,7 @@ def parse_frontmatter(content):
     return frontmatter, None
 
 
-def validate_name(name, max_length=64):
+def validate_name(name: object, max_length: int = 64) -> str | None:
     """Validate a kebab-case identifier shared by skills and agents.
 
     Parameters
@@ -92,7 +92,7 @@ def validate_name(name, max_length=64):
     return None
 
 
-def validate_description(description, max_length=107):
+def validate_description(description: object, max_length: int = 107) -> str | None:
     """Validate a skill or agent ``description`` field.
 
     The cap is intentionally identical for skills and agents: the description
