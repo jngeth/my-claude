@@ -23,12 +23,16 @@ For the full set with concrete before/after examples, load `subskills/markdown.m
 
 ## When writing skill instructions
 
-Four additional principles apply when the content is a SKILL.md or skill reference file:
+Six additional principles apply when the content is a SKILL.md or skill reference file:
 
 1. **Imperative voice.** "To do X, do Y" not "you should do X" or "if you need to do X."
 2. **Explain the why.** Justify instructions instead of stacking ALWAYS/NEVER. Rules with rationale survives edge cases.
-3. **Theory of mind.** Lead with what's non-obvious: quirks, gotchas, hidden constraints. Skills are reas cold.
+3. **Theory of mind.** Lead with what's non-obvious: quirks, gotchas, hidden constraints. Skills are read cold.
 4. **Generalize.** Skills run across many contexts. Resist hard-coding rules that only fix examples in front of you.
+5. **Cut no-ops.** Delete any instruction the model already follows by default. Test each sentence alone:
+   Does it change behavior versus leaving it out? If not, cut the whole sentence, don't trim words. Prune every edit.
+6. **Anchor behavior with a leading word.** A word the model already knows from training (tracer bullets, a tight loop)
+   carries a whole behavior in one token. Repeat the word itself, not a paraphrase. Reach for an existing word first.
 
 ## When writing markdown
 
@@ -61,3 +65,4 @@ It preserves each column's alignment: plain `| --- |` stays plain, and `:--`, `:
 - Is any list out of alphabetical order? Sort it unless the order is meaningful.
 - Any orphan one-or-two-word lines that could be absorbed by trimming the line above?
 - Are any bullets or sentences removable without breaking the surrounding instruction?
+- Does any instruction tell the model to do what it already does by default? Cut it.
