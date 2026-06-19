@@ -1,136 +1,126 @@
-#!/usr/bin/env python3
-"""Tests for init_agent.py. Run with: python3 -m unittest test_init_agent"""
+"""Tests for init_agent.py."""
 
-import importlib.util
-import io
+import logging
 import subprocess
 import sys
-import tempfile
-import unittest
-from contextlib import redirect_stdout
 from pathlib import Path
+from types import ModuleType
 
-SCRIPTS = Path(__file__).resolve().parent
-INIT_SCRIPT = SCRIPTS / "init_agent.py"
-VALIDATE_SCRIPT = SCRIPTS / "quick_validate.py"
-
-
-def _load(name, path):
-    spec = importlib.util.spec_from_file_location(name, path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+import pytest
 
 
-init_agent_mod = _load("init_agent", INIT_SCRIPT)
-quick_validate_mod = _load("quick_validate", VALIDATE_SCRIPT)
-
-title_case = init_agent_mod.title_case
-build_agent_md = init_agent_mod.build_agent_md
-init_agent = init_agent_mod.init_agent
-DEFAULT_DESCRIPTION = init_agent_mod.DEFAULT_DESCRIPTION
-validate_agent = quick_validate_mod.validate_agent
-
-
-def make_agent(parent: Path, name: str, **kwargs) -> Path:
-    """Call init_agent with defaults, swallowing stdout, and return the file path."""
-    params = {"description": DEFAULT_DESCRIPTION, "tools": "", "model": "", "extends": ""}
+def make_agent(init_agent: ModuleType, parent: Path, name: str, **kwargs: str) -> Path:
+    """Call init_agent with sensible defaults and return the created file path."""
+    params: dict[str, str] = {
+        "description": init_agent.DEFAULT_DESCRIPTION,
+        "tools": "",
+        "model": "",
+        "extends": "",
+    }
     params.update(kwargs)
-    with redirect_stdout(io.StringIO()):
-        return init_agent(name, str(parent), **params)
+    return init_agent.init_agent(name, str(parent), **params)
 
 
-class TitleCaseTest(unittest.TestCase):
-    def test_hyphenated(self):
-        self.assertEqual(title_case("python-engineer"), "Python Engineer")
+def run_init(module: ModuleType, args: list[str]) -> subprocess.CompletedProcess[str]:
+    """Invoke init_agent.py as a subprocess."""
+    script = module.__file__
+    assert script is not None
+    return subprocess.run(
+        [sys.executable, script, *args], capture_output=True, text=True
+    )
 
 
-class BuildAgentMdTest(unittest.TestCase):
-    def test_minimal_frontmatter(self):
-        text = build_agent_md("solo", "Does a thing.", "", "", "")
-        self.assertIn("name: solo", text)
-        self.assertIn('description: "Does a thing."', text)
-        self.assertIn("# Solo", text)
-        self.assertNotIn("tools:", text)
-        self.assertNotIn("model:", text)
-        self.assertNotIn("Load the", text)
-
-    def test_tools_and_model_included(self):
-        text = build_agent_md("rev", "Reviews.", "Read, Grep", "sonnet", "")
-        self.assertIn("tools: Read, Grep", text)
-        self.assertIn("model: sonnet", text)
-
-    def test_extends_adds_load_section(self):
-        text = build_agent_md("py", "Builds.", "", "", "python")
-        self.assertIn("Load the python conventions first", text)
-        self.assertIn("`python` skill", text)
+def test_title_case_hyphenated(init_agent: ModuleType) -> None:
+    assert init_agent.title_case("python-engineer") == "Python Engineer"
 
 
-class InitAgentTest(unittest.TestCase):
-    def test_creates_named_file(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            agent = make_agent(Path(tmp), "code-reviewer")
-            self.assertIsNotNone(agent)
-            self.assertEqual(agent.name, "code-reviewer.md")
-            self.assertTrue(agent.is_file())
-
-    def test_creates_missing_parent_dir(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            nested = Path(tmp) / "deep" / "agents"
-            agent = make_agent(nested, "fresh")
-            self.assertTrue(agent.is_file())
-
-    def test_existing_file_returns_none(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            make_agent(Path(tmp), "dup")
-            with redirect_stdout(io.StringIO()) as out:
-                result = init_agent("dup", tmp, DEFAULT_DESCRIPTION, "", "", "")
-            self.assertIsNone(result)
-            self.assertIn("already exists", out.getvalue())
-
-    def test_generated_default_agent_passes_validation(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            agent = make_agent(Path(tmp), "scaffold-demo")
-            valid, message = validate_agent(agent, search_dirs=[tmp])
-            self.assertTrue(valid, message)
-
-    def test_generated_full_agent_passes_validation(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            agent = make_agent(
-                Path(tmp),
-                "full-demo",
-                description="Reviews Python diffs when the user asks for review.",
-                tools="Read, Grep, Glob, Bash",
-                model="inherit",
-                extends="python",
-            )
-            valid, message = validate_agent(agent, search_dirs=[tmp])
-            self.assertTrue(valid, message)
+def test_minimal_frontmatter(init_agent: ModuleType) -> None:
+    text = init_agent.build_agent_md("solo", "Does a thing.", "", "", "")
+    assert "name: solo" in text
+    assert 'description: "Does a thing."' in text
+    assert "# Solo" in text
+    assert "tools:" not in text
+    assert "model:" not in text
+    assert "Load the" not in text
 
 
-class EndToEndTest(unittest.TestCase):
-    def run_init(self, args):
-        return subprocess.run(
-            [sys.executable, str(INIT_SCRIPT), *args], capture_output=True, text=True
+def test_tools_and_model_included(init_agent: ModuleType) -> None:
+    text = init_agent.build_agent_md("rev", "Reviews.", "Read, Grep", "sonnet", "")
+    assert "tools: Read, Grep" in text
+    assert "model: sonnet" in text
+
+
+def test_extends_adds_load_section(init_agent: ModuleType) -> None:
+    text = init_agent.build_agent_md("py", "Builds.", "", "", "python")
+    assert "Load the python conventions first" in text
+    assert "`python` skill" in text
+
+
+def test_creates_named_file(init_agent: ModuleType, tmp_path: Path) -> None:
+    agent = make_agent(init_agent, tmp_path, "code-reviewer")
+    assert agent is not None
+    assert agent.name == "code-reviewer.md"
+    assert agent.is_file()
+
+
+def test_creates_missing_parent_dir(init_agent: ModuleType, tmp_path: Path) -> None:
+    nested = tmp_path / "deep" / "agents"
+    agent = make_agent(init_agent, nested, "fresh")
+    assert agent.is_file()
+
+
+def test_existing_file_returns_none(
+    init_agent: ModuleType, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    make_agent(init_agent, tmp_path, "dup")
+    with caplog.at_level(logging.ERROR):
+        result = init_agent.init_agent(
+            "dup", str(tmp_path), init_agent.DEFAULT_DESCRIPTION, "", "", ""
         )
-
-    def test_creates_agent_exit_zero(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            result = self.run_init(["cli-agent", "--path", tmp, "--tools", "Read, Grep"])
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertTrue((Path(tmp) / "cli-agent.md").is_file())
-
-    def test_existing_file_exit_one(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            (Path(tmp) / "dup.md").write_text("x")
-            result = self.run_init(["dup", "--path", tmp])
-            self.assertEqual(result.returncode, 1)
-            self.assertIn("already exists", result.stdout)
-
-    def test_missing_required_path_exit_two(self):
-        result = self.run_init(["orphan"])
-        self.assertEqual(result.returncode, 2)  # argparse usage error
+    assert result is None
+    assert "already exists" in caplog.text
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_generated_default_agent_passes_validation(
+    init_agent: ModuleType, quick_validate: ModuleType, tmp_path: Path
+) -> None:
+    agent = make_agent(init_agent, tmp_path, "scaffold-demo")
+    valid, message = quick_validate.validate_agent(agent, search_dirs=[str(tmp_path)])
+    assert valid, message
+
+
+def test_generated_full_agent_passes_validation(
+    init_agent: ModuleType, quick_validate: ModuleType, tmp_path: Path
+) -> None:
+    agent = make_agent(
+        init_agent,
+        tmp_path,
+        "full-demo",
+        description="Reviews Python diffs when the user asks for review.",
+        tools="Read, Grep, Glob, Bash",
+        model="inherit",
+        extends="python",
+    )
+    valid, message = quick_validate.validate_agent(agent, search_dirs=[str(tmp_path)])
+    assert valid, message
+
+
+def test_creates_agent_exit_zero(init_agent: ModuleType, tmp_path: Path) -> None:
+    result = run_init(
+        init_agent,
+        ["cli-agent", "--path", str(tmp_path), "--tools", "Read, Grep"],
+    )
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "cli-agent.md").is_file()
+
+
+def test_existing_file_exit_one(init_agent: ModuleType, tmp_path: Path) -> None:
+    (tmp_path / "dup.md").write_text("x")
+    result = run_init(init_agent, ["dup", "--path", str(tmp_path)])
+    assert result.returncode == 1
+    assert "already exists" in result.stderr
+
+
+def test_missing_required_path_exit_two(init_agent: ModuleType) -> None:
+    result = run_init(init_agent, ["orphan"])
+    assert result.returncode == 2  # argparse usage error
