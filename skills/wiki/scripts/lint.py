@@ -7,10 +7,13 @@ Usage:
 Default wiki_dir is ./wiki. Prints a markdown report to stdout. Exit code is 0 regardless of findings.
 """
 
+import logging
 import re
 import sys
 from collections import defaultdict
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 SKIP_FILES = {"index.md", "log.md"}
 STUB_WORD_LIMIT = 60
@@ -19,14 +22,23 @@ MARKDOWN_LINK_REGEX = re.compile(r"\]\(([^)]+?\.md)(?:#[^)]*)?\)")
 
 
 def find_md_files(root: Path) -> list[Path]:
+    """Return every ``*.md`` file under ``root``, sorted by path."""
     return sorted(path for path in root.rglob("*.md") if path.is_file())
 
 
 def parse_links(text: str) -> list[str]:
+    """Extract the page names from all ``[[wikilinks]]`` in ``text``.
+
+    Examples
+    --------
+    >>> parse_links("see [[Alpha]] and [[Beta#section|alias]]")
+    ['Alpha', 'Beta']
+    """
     return [match.group(1).strip() for match in WIKILINK_REGEX.finditer(text)]
 
 
 def index_referenced_stems(text: str) -> set[str]:
+    """Return lowercased page stems referenced by wikilinks or markdown links."""
     stems = {link.lower() for link in parse_links(text)}
     for match in MARKDOWN_LINK_REGEX.finditer(text):
         stems.add(Path(match.group(1)).stem.lower())
@@ -34,12 +46,20 @@ def index_referenced_stems(text: str) -> set[str]:
 
 
 def word_count(text: str) -> int:
+    """Count words in ``text``, ignoring frontmatter and fenced code blocks.
+
+    Examples
+    --------
+    >>> word_count("---\\ntitle: x\\n---\\nhello world")
+    2
+    """
     text = re.sub(r"^---\n.*?\n---\n", "", text, count=1, flags=re.DOTALL)
     text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
     return len(text.split())
 
 
 def section(title: str, lines: list[str], empty: str = "None.") -> list[str]:
+    """Render a report section, substituting ``empty`` when there are no lines."""
     block = [f"{title}\n"]
     if lines:
         block.extend(lines)
@@ -50,9 +70,11 @@ def section(title: str, lines: list[str], empty: str = "None.") -> list[str]:
 
 
 def main() -> None:
+    """Lint the wiki directory (argv[1] or ./wiki) and print a markdown report."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     wiki_dir = Path(sys.argv[1] if len(sys.argv) > 1 else "wiki").resolve()
     if not wiki_dir.is_dir():
-        print(f"error: not a directory: {wiki_dir}", file=sys.stderr)
+        logger.error("not a directory: %s", wiki_dir)
         sys.exit(1)
 
     files = find_md_files(wiki_dir)
@@ -92,6 +114,7 @@ def main() -> None:
     ]
 
     def rel(page: Path) -> str:
+        """Return ``page`` as a wiki-relative POSIX path for display."""
         return page.relative_to(wiki_dir).as_posix()
 
     out = []
