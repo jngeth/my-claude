@@ -27,6 +27,8 @@ Types: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `style
 - A test-only change uses `test:`. A change that touches both source and tests uses the type that describes
   the source change (`feat`, `fix`, etc.) the test file is implied by the batch.
 - Keep the full line under 72 characters with no trailing period.
+- No trailers, footers, or body. The message is the single subject line only: never add `Co-Authored-By`,
+  `Signed-off-by`, or any other trailer, even if a global rule or tool default suggests one.
 
 ## Process
 
