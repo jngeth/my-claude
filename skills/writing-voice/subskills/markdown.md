@@ -8,7 +8,7 @@ They reflect what the user actually does when they cut, not abstract style advic
 
 ---
 
-## The nine principles
+## The ten principles
 
 ### 1. Punctuation: colon or period, never em-dash
 
@@ -86,6 +86,14 @@ Drop a word, swap "and" for a comma, rephrase. No continuation line should hold 
   "Anecdotes, jokes, voicy framing, and rhetorical flourishes go first. The rule / stays."
 - After (no orphan):
   "Anecdotes, jokes, voicy framing, rhetorical flourishes go first. The rule stays."
+
+**Sentence breaks:** when a bullet or paragraph runs several sentences, break at a sentence boundary so each line holds
+whole sentences, not a stray clause leading the next line. Fill the line but break between sentences, not within one.
+
+- Before (mid-sentence wrap):
+  "reason over a stand-in. Do not ask / the user to draw a conclusion."
+- After (break at the period):
+  "reason over a stand-in. / Do not ask the user to draw a conclusion."
 
 Apply when editing: if a paragraph is wrapped at 70-90 chars and the budget is 120, repack.
 Apply when writing: don't break to a new line unless the next word would push past 120.

@@ -61,6 +61,7 @@ It preserves each column's alignment: plain `| --- |` stays plain, and `:--`, `:
 - Is any sentence mostly flavor?
 - Could any example be half as long?
 - Any em-dashes? Replace with a colon or period.
+- Any comma splicing two independent clauses? Replace it with a period.
 - Could any short consecutive lines pack into one near 120 chars?
 - Is any list out of alphabetical order? Sort it unless the order is meaningful.
 - Any orphan one-or-two-word lines that could be absorbed by trimming the line above?
