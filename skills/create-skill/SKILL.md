@@ -1,6 +1,6 @@
 ---
 name: create-skill
-description: Build, edit, evaluate, and tune Claude skills. Use whenever the user wants to create or improve a skill.
+description: Build and scaffold a new Claude skill from intent. Use when the user wants to create a skill.
 ---
 
 # Create Skill
@@ -8,8 +8,8 @@ description: Build, edit, evaluate, and tune Claude skills. Use whenever the use
 Help a user create and iterate on Claude skills. A skill is a self-contained directory with a `SKILL.md`
 (YAML frontmatter + markdown instructions) plus optional `assets/`, `scripts/` and `references/` subdirectories.
 
-Figure out which step below the user is on and jump in. They might arrive with nothing ("I want a skill for X"),
-a half-built draft, or feedback after running an existing skill. Meet them where they are.
+Figure out which step below the user is on and jump in. They might arrive with nothing ("I want a skill for X")
+or a half-built draft. Meet them where they are. To refine a skill that already works, use the `improve-skill` skill.
 
 ---
 
