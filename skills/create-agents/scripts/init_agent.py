@@ -16,6 +16,8 @@ Examples:
     init_agent.py python-engineer --path ~/.claude/agents --extends python
 """
 
+from __future__ import annotations
+
 import argparse
 import logging
 import sys

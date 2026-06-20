@@ -1,5 +1,7 @@
 """Tests for init_agent.py."""
 
+from __future__ import annotations
+
 import logging
 import subprocess
 import sys

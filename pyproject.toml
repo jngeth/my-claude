@@ -14,3 +14,9 @@ dev = [
 testpaths = ["skills"]
 python_files = ["test_*.py"]
 addopts = "--import-mode=importlib"
+
+[tool.ruff]
+target-version = "py39"  # skill scripts run on system python 3.9; keep pyupgrade off 3.10-only annotation syntax
+
+[tool.ruff.lint]
+extend-select = ["FA"]  # flag modern annotations missing `from __future__ import annotations` (needed on 3.9)

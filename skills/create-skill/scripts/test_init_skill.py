@@ -1,5 +1,7 @@
 """Tests for init_skill.py."""
 
+from __future__ import annotations
+
 import logging
 import subprocess
 import sys
@@ -107,9 +109,7 @@ def test_existing_directory_returns_none(
 
 
 def test_creates_skill_exit_zero(init_skill: ModuleType, tmp_path: Path) -> None:
-    result = run_init(
-        init_skill, ["cli-skill", "--path", str(tmp_path), "--scripts"]
-    )
+    result = run_init(init_skill, ["cli-skill", "--path", str(tmp_path), "--scripts"])
     assert result.returncode == 0, result.stderr
     assert (tmp_path / "cli-skill" / "SKILL.md").is_file()
     assert (tmp_path / "cli-skill" / "scripts" / "example.py").is_file()

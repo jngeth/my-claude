@@ -15,6 +15,8 @@ Examples:
     init_skill.py router --path ./skills --subskills
 """
 
+from __future__ import annotations
+
 import argparse
 import logging
 import sys

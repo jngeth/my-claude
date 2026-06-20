@@ -1,5 +1,7 @@
 """Tests for frontmatter_rules.py."""
 
+from __future__ import annotations
+
 from types import ModuleType
 
 

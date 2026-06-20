@@ -1,5 +1,7 @@
 """Tests for quick_validate.py."""
 
+from __future__ import annotations
+
 import subprocess
 import sys
 import textwrap
@@ -18,7 +20,9 @@ def write_skill(
     return skill_dir
 
 
-def run_validate(module: ModuleType, skill_dir: Path) -> subprocess.CompletedProcess[str]:
+def run_validate(
+    module: ModuleType, skill_dir: Path
+) -> subprocess.CompletedProcess[str]:
     """Invoke quick_validate.py as a subprocess against ``skill_dir``."""
     script = module.__file__
     assert script is not None

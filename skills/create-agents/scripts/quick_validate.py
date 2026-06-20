@@ -11,6 +11,8 @@ Usage:
     quick_validate.py <agent-file.md>
 """
 
+from __future__ import annotations
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -30,13 +32,17 @@ def _load_shared_rules() -> ModuleType:
     for candidate in candidates:
         module_path = candidate / "frontmatter_rules.py"
         if module_path.exists():
-            spec = importlib.util.spec_from_file_location("frontmatter_rules", module_path)
+            spec = importlib.util.spec_from_file_location(
+                "frontmatter_rules", module_path
+            )
             if spec is None or spec.loader is None:
                 continue
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             return module
-    raise SystemExit("Error: could not locate create-skill/scripts/frontmatter_rules.py")
+    raise SystemExit(
+        "Error: could not locate create-skill/scripts/frontmatter_rules.py"
+    )
 
 
 frontmatter_rules = _load_shared_rules()

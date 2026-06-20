@@ -1,5 +1,7 @@
 """Tests for quick_validate.py (create-agents)."""
 
+from __future__ import annotations
+
 import subprocess
 import sys
 import textwrap
@@ -17,7 +19,9 @@ def write_agent(
     return path
 
 
-def run_validate(module: ModuleType, agent_path: Path) -> subprocess.CompletedProcess[str]:
+def run_validate(
+    module: ModuleType, agent_path: Path
+) -> subprocess.CompletedProcess[str]:
     """Invoke quick_validate.py as a subprocess against ``agent_path``."""
     script = module.__file__
     assert script is not None

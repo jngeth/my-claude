@@ -1,5 +1,7 @@
 """Tests for align_tables.py."""
 
+from __future__ import annotations
+
 from types import ModuleType
 
 

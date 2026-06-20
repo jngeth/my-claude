@@ -1,5 +1,7 @@
 """Tests for aggregate_benchmark.py."""
 
+from __future__ import annotations
+
 import json
 import subprocess
 import sys
@@ -97,7 +99,9 @@ def run_agg(module: ModuleType, args: list[str]) -> subprocess.CompletedProcess[
     """Invoke aggregate_benchmark.py as a subprocess."""
     script = module.__file__
     assert script is not None
-    return subprocess.run([sys.executable, script, *args], capture_output=True, text=True)
+    return subprocess.run(
+        [sys.executable, script, *args], capture_output=True, text=True
+    )
 
 
 def test_read_json_missing_file_returns_none(

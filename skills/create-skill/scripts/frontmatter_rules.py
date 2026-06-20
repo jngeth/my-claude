@@ -6,6 +6,8 @@ Both ``create-skill`` and ``create-agents`` validate the same ``name`` and
 The functions are pure: each validator layers its own structural checks on top.
 """
 
+from __future__ import annotations
+
 import re
 
 try:

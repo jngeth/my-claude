@@ -7,6 +7,8 @@ Usage:
 Default wiki_dir is ./wiki. Prints a markdown report to stdout. Exit code is 0 regardless of findings.
 """
 
+from __future__ import annotations
+
 import logging
 import re
 import sys
