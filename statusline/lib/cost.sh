@@ -6,7 +6,7 @@
 # via flock; each only writes its own row.
 #
 # Requires globals: SESSION_DIR, MONTHLY_CACHE, MODEL_ID, SESSION_ID,
-#   TOK_IN, TOK_CACHE_W, TOK_CACHE_R, TOK_OUT, RATE_IN, RATE_OUT, RATE_CACHE_R
+#   TOK_IN, TOK_CACHE_W, TOK_CACHE_R, TOK_OUT, RATE_IN, RATE_OUT, RATE_CACHE_R, RATE_CACHE_W
 # Sets globals: MONTHLY_TOTAL (raw 6dp sum), COST (display "%.2f")
 # All float-producing awk/printf calls force LC_ALL=C so the decimal separator is
 # always "." regardless of the user's locale (a comma would corrupt the ledger).
@@ -77,9 +77,9 @@ track_cost() {
   NEW_COST=$(LC_ALL=C awk \
     -v prev="$PREV_COST" \
     -v i="$DELTA_IN" -v cw="$DELTA_CW" -v cr="$DELTA_CR" -v o="$DELTA_OUT" \
-    -v ri="$RATE_IN" -v ro="$RATE_OUT" -v rcr="$RATE_CACHE_R" '
+    -v ri="$RATE_IN" -v ro="$RATE_OUT" -v rcr="$RATE_CACHE_R" -v rcw="$RATE_CACHE_W" '
     BEGIN {
-      delta = (i/1000000)*ri + (cw/1000000)*ri + (cr/1000000)*rcr + (o/1000000)*ro
+      delta = (i/1000000)*ri + (cw/1000000)*rcw + (cr/1000000)*rcr + (o/1000000)*ro
       printf "%.6f", prev + delta
     }')
 
