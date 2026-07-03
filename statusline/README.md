@@ -92,13 +92,13 @@ All data is self-contained in this directory. Nothing is written to `/tmp` or el
 modules in `lib/`, calls them in order, and prints the two lines. Each module is a **sourced fragment** (not a
 standalone script) and communicates through shared shell variables, documented in each file's header.
 
-| Module          | Entry point(s)                                | Reads                       | Sets                                  |
-| --------------- | --------------------------------------------- | --------------------------- | ------------------------------------- |
-| `colors.sh`     | `pct_color()`                                 |                             | color constants                       |
-| `pricing.sh`    | `load_pricing <model_id>`                     |                             | `RATE_IN`, `RATE_OUT`, `RATE_CACHE_R` |
-| `cost.sh`       | `track_cost`                                  | `TOK_*`, `RATE_*`, dir path | `MONTHLY_TOTAL`, `COST`               |
-| `ratelimits.sh` | `load_rate_limits <json>`                     | `RATE_CACHE`                | `FIVE_H_*`, `WEEK_*`                  |
-| `render.sh`     | `build_context_bar`, `rate_bar`, `rate_label` | `CTX_*`, colors             | bars / labels                         |
+| Module          | Entry point(s)                                | Reads                       | Sets                                                  |
+| --------------- | --------------------------------------------- | --------------------------- | ----------------------------------------------------- |
+| `colors.sh`     | `pct_color()`                                 |                             | color constants                                       |
+| `pricing.sh`    | `load_pricing <model_id>`                     |                             | `RATE_IN`, `RATE_OUT`, `RATE_CACHE_R`, `RATE_CACHE_W` |
+| `cost.sh`       | `track_cost`                                  | `TOK_*`, `RATE_*`, dir path | `MONTHLY_TOTAL`, `COST`                               |
+| `ratelimits.sh` | `load_rate_limits <json>`                     | `RATE_CACHE`                | `FIVE_H_*`, `WEEK_*`                                  |
+| `render.sh`     | `build_context_bar`, `rate_bar`, `rate_label` | `CTX_*`, colors             | bars / labels                                         |
 
 Load order matters: `pricing` sourced before `cost` (cost uses rates) and `colors` before `render` (render uses colors).
 
@@ -119,19 +119,20 @@ Variables are consumed by sibling modules that standalone analysis can't see. Al
 
 ### Pricing (per million tokens)
 
-| Model  | Input | Cache Write | Cache Read | Output |
-| ------ | ----- | ----------- | ---------- | ------ |
-| Opus   | $5.00 | $5.00       | $0.50      | $25.00 |
-| Sonnet | $3.00 | $3.00       | $0.30      | $15.00 |
-| Haiku  | $1.00 | $1.00       | $0.10      | $5.00  |
+| Model  | Input  | Cache Write | Cache Read | Output |
+| ------ | ------ | ----------- | ---------- | ------ |
+| Fable  | $10.00 | $12.50      | $1.00      | $50.00 |
+| Opus   | $5.00  | $6.25       | $0.50      | $25.00 |
+| Sonnet | $3.00  | $3.75       | $0.30      | $15.00 |
+| Haiku  | $1.00  | $1.25       | $0.10      | $5.00  |
 
-Cache read is 10% of the input rate (90% discount). Cache write is the same as input.
+Cache read is 10% of the input rate (90% discount). Cache write is 1.25x the input rate (5-minute cache).
 
 ### Per-message cost formula
 
 ```
 cost = (input_tokens / 1M × rate_in)
-     + (cache_write_tokens / 1M × rate_in)
+     + (cache_write_tokens / 1M × rate_cache_write)
      + (cache_read_tokens / 1M × rate_cache_read)
      + (output_tokens / 1M × rate_out)
 ```
